@@ -38,7 +38,7 @@ CDomain::CDomain( const double& p_dDiffusionCoefficient,
                                                       m_strLogNorms( "" ),
                                                       m_uNumberOfTasks( p_uNumberOfTasks ),
                                                       m_uRank( p_uRank ),
-                                                      m_uLoopSize( p_uNumberOfGridPoints1D/( p_uNumberOfTasks-1 ) )
+                                                      m_uLoopSize( p_uNumberOfGridPoints1D/( p_uNumberOfTasks-1 ) - 1 )
 
 {
     //ds only allocate grid if we are the master
@@ -206,7 +206,7 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
 void CDomain::updateHeatDistributionNumericalSLAVE( )
 {
     //ds get looping range
-    const unsigned int uIndexStart( ( m_uRank-1 )*m_uLoopSize );
+    const unsigned int uIndexStart( ( m_uRank-1 )*m_uLoopSize + 1 );
     const unsigned int uIndexEnd( m_uRank*m_uLoopSize );
 
     std::cout << "rank: " << m_uRank << std::endl;
