@@ -151,23 +151,15 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     //ds send the data to the workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
-        double currentGrid[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
+        double currentGrid[m_uNumberOfGridPoints1D];
 
-        for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
-        {
-            for( unsigned int v = 0; v < m_uNumberOfGridPoints1D; ++v )
-            {
-                currentGrid[u][v] = 0.0;
-            }
-        }
-
-        std::cout << "current grid: " << currentGrid[0][0] << std::endl;
-        std::cout << "current grid: " << currentGrid[m_uNumberOfGridPoints1D-1][m_uNumberOfGridPoints1D-1] << std::endl;
+        std::cout << "current grid: " << currentGrid[0] << std::endl;
+        std::cout << "current grid: " << currentGrid[m_uNumberOfGridPoints1D-1] << std::endl;
 
         std::cout << "sending to: " << iRank << std::endl;
 
         //ds send respective grid unit to slave
-        MPI_Send( &(currentGrid[0][0]), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( &(currentGrid[0]), m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     //ds wait for all results from workers
@@ -231,17 +223,17 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
     while( true )
     {
         //ds heat grid to work with
-        double** gridHeat;
+        double* gridHeat;
 
         std::cout << "receiving: " << m_uRank << std::endl;
 
         //ds receive message from the master
-        MPI_Recv( &(gridHeat[0][0]), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+        MPI_Recv( &(gridHeat[0]), m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
         std::cout << "gid[0][0]: " << std::endl;
-        std::cout << gridHeat[0][0] << std::endl;
+        std::cout << gridHeat[0] << std::endl;
 
         std::cout << "over" << std::endl;
 
@@ -292,13 +284,13 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
                             const double dXp[2] = { ( up*m_dGridPointSpacing + dOffsetU ), ( vp*m_dGridPointSpacing + dOffsetV ) };
 
                             //ds compute inner sum
-                            dInnerSum += ( gridHeat[up][vp] - gridHeat[uk][vk] )*getKernelEta( dXp, dXk );
+                            //dInnerSum += ( gridHeat[up][vp] - gridHeat[uk][vk] )*getKernelEta( dXp, dXk );
                         }
                     }
                 }
 
                 //ds add final part of formula and save in temporary grid
-                gridHeatChangePSE[uk][vk] = m_PSEFactor*dInnerSum + gridHeat[uk][vk];
+                //gridHeatChangePSE[uk][vk] = m_PSEFactor*dInnerSum + gridHeat[uk][vk];
             }
         }
 
@@ -308,7 +300,7 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
             for( unsigned int v = uIndexStart; v < uIndexEnd; ++v )
             {
                 //ds this assignment causes zero values for no changes
-                gridHeat[u][v] = gridHeatChangePSE[u][v];
+                //gridHeat[u][v] = gridHeatChangePSE[u][v];
             }
         }
 
