@@ -205,6 +205,9 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
 
 void CDomain::updateHeatDistributionNumericalSLAVE( )
 {
+    //ds status
+    MPI_Status mpiStatus;
+
     //ds get looping range
     const unsigned int uIndexStart( ( m_uRank-1 )*m_uLoopSize );
     unsigned int uIndexEnd( m_uRank*m_uLoopSize - 1 );
@@ -216,72 +219,84 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
         uIndexEnd = m_uNumberOfGridPoints1D;
     }
 
-    std::cout << "rank: " << m_uRank << std::endl;
-    std::cout << "u: " << uIndexStart << " to " << uIndexEnd << std::endl;
-
+    //ds until master stops us
     while( true )
     {
-        //ds
-    }
+        //ds heat grid to work with
+        double** gridHeat( 0 );
 
+        //ds receive message from the master
+        MPI_Recv( &gridHeat, 1, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
-    //ds heat change for current time step
-    double gridHeatChangePSE[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
-
-    //ds for all grid points
-    for( unsigned int uk = 0; uk < m_uNumberOfGridPoints1D; ++uk )
-    {
-        for( unsigned int vk = 0; vk < m_uNumberOfGridPoints1D; ++vk )
+        //ds if its the stop tag terminate
+        if( MPI_DIETAG == mpiStatus.MPI_TAG )
         {
-            //ds get 2d vector of current coordinates
-            const double dXk[2] = { uk*m_dGridPointSpacing, vk*m_dGridPointSpacing };
+            //ds escape loop
+            return;
+        }
 
-            //ds inner sum of formula
-            double dInnerSum( 0.0 );
+        //ds heat change for current time step
+        double gridHeatChangePSE[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
 
-            //ds loop 20x20
-            for( int i = -10; i <= 10; ++i )
+        //ds for all grid points in our range
+        for( unsigned int uk = uIndexStart; uk < uIndexEnd; ++uk )
+        {
+            for( unsigned int vk = uIndexStart; vk < uIndexEnd; ++vk )
             {
-                for( int j = -10; j <= 10; ++j )
+                //ds get 2d vector of current coordinates
+                const double dXk[2] = { uk*m_dGridPointSpacing, vk*m_dGridPointSpacing };
+
+                //ds inner sum of formula
+                double dInnerSum( 0.0 );
+
+                //ds loop 20x20
+                for( int i = -10; i <= 10; ++i )
                 {
-                    //ds get current indexes up, vp
-                    int up = uk + i;
-                    int vp = vk + j;
-
-                    //ds if we are not ourself (unsigned overflow no problem here)
-                    if( uk != static_cast< unsigned int >( up ) && vk != static_cast< unsigned int >( vp ) )
+                    for( int j = -10; j <= 10; ++j )
                     {
-                        //ds offset value (required for spaced positions)
-                        double dOffsetU = 0.0;
-                        double dOffsetV = 0.0;
+                        //ds get current indexes up, vp
+                        int up = uk + i;
+                        int vp = vk + j;
 
-                        //ds check boundary
-                        if( 0 > up                        ){ up += m_uNumberOfGridPoints1D; dOffsetU = -m_dBoundarySize; } //ds moving to negative boundary
-                   else if( m_uNumberOfGridPoints1D <= up ){ up -= m_uNumberOfGridPoints1D; dOffsetU = m_dBoundarySize;  } //ds moving to positive boundary
-                        if( 0 > vp                        ){ vp += m_uNumberOfGridPoints1D; dOffsetV = -m_dBoundarySize; } //ds moving to negative boundary
-                   else if( m_uNumberOfGridPoints1D <= vp ){ vp -= m_uNumberOfGridPoints1D; dOffsetV = m_dBoundarySize;  } //ds moving to positive boundary
+                        //ds if we are not ourself (unsigned overflow no problem here)
+                        if( uk != static_cast< unsigned int >( up ) && vk != static_cast< unsigned int >( vp ) )
+                        {
+                            //ds offset value (required for spaced positions)
+                            double dOffsetU = 0.0;
+                            double dOffsetV = 0.0;
 
-                        //ds get 2d vector of current coordinates
-                        const double dXp[2] = { ( up*m_dGridPointSpacing + dOffsetU ), ( vp*m_dGridPointSpacing + dOffsetV ) };
+                            //ds check boundary
+                            if( 0 > up                        ){ up += m_uNumberOfGridPoints1D; dOffsetU = -m_dBoundarySize; } //ds moving to negative boundary
+                       else if( m_uNumberOfGridPoints1D <= up ){ up -= m_uNumberOfGridPoints1D; dOffsetU = m_dBoundarySize;  } //ds moving to positive boundary
+                            if( 0 > vp                        ){ vp += m_uNumberOfGridPoints1D; dOffsetV = -m_dBoundarySize; } //ds moving to negative boundary
+                       else if( m_uNumberOfGridPoints1D <= vp ){ vp -= m_uNumberOfGridPoints1D; dOffsetV = m_dBoundarySize;  } //ds moving to positive boundary
 
-                        //ds compute inner sum
-                        dInnerSum += ( m_gridHeat[up][vp] - m_gridHeat[uk][vk] )*getKernelEta( dXp, dXk );
+                            //ds get 2d vector of current coordinates
+                            const double dXp[2] = { ( up*m_dGridPointSpacing + dOffsetU ), ( vp*m_dGridPointSpacing + dOffsetV ) };
+
+                            //ds compute inner sum
+                            dInnerSum += ( gridHeat[up][vp] - gridHeat[uk][vk] )*getKernelEta( dXp, dXk );
+                        }
                     }
                 }
+
+                //ds add final part of formula and save in temporary grid
+                gridHeatChangePSE[uk][vk] = m_PSEFactor*dInnerSum + gridHeat[uk][vk];
             }
-
-            //ds add final part of formula and save in temporary grid
-            gridHeatChangePSE[uk][vk] = m_PSEFactor*dInnerSum;
         }
-    }
 
-    //ds copy all computed values to original grid
-    for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
-    {
-        for( unsigned int v = 0; v < m_uNumberOfGridPoints1D; ++v )
+        //ds copy all computed values to original grid
+        for( unsigned int u = uIndexStart; u < uIndexEnd; ++u )
         {
-            m_gridHeat[u][v] += gridHeatChangePSE[u][v];
+            for( unsigned int v = uIndexStart; v < uIndexEnd; ++v )
+            {
+                //ds this assignment causes zero values for no changes
+                gridHeat[u][v] = gridHeatChangePSE[u][v];
+            }
         }
+
+        //ds send the result back
+        MPI_Send( &gridHeat, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
     }
 }
 
