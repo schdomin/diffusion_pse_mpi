@@ -159,7 +159,7 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
         std::cout << "sending to: " << iRank << std::endl;
 
         //ds send respective grid unit to slave
-        MPI_Send( &currentGrid, 10, MPI_INT, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( &currentGrid[0], 10, MPI_INT, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     while( true ){ };
@@ -225,12 +225,12 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
     while( true )
     {
         //ds heat grid to work with
-        double* gridHeat;
+        int* gridHeat;
 
         std::cout << "receiving: " << m_uRank << std::endl;
 
         //ds receive message from the master
-        MPI_Recv( &gridHeat, 10, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+        MPI_Recv( &gridHeat[0], 10, MPI_INT, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
