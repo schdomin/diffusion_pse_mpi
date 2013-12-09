@@ -153,6 +153,14 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     {
         double currentGrid[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
 
+        for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
+        {
+            for( unsigned int v = 0; v < m_uNumberOfGridPoints1D; ++v )
+            {
+                currentGrid[u][v] = 0.0;
+            }
+        }
+
         std::cout << "current grid: " << currentGrid[0][0] << std::endl;
         std::cout << "current grid: " << currentGrid[m_uNumberOfGridPoints1D-1][m_uNumberOfGridPoints1D-1] << std::endl;
 
