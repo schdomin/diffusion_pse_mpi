@@ -151,7 +151,7 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     //ds send the data to the workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
-        double** currentGrid = vecGridUnits[iRank-1];
+        double currentGrid[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
 
         std::cout << "current grid: " << currentGrid[0][0] << std::endl;
         std::cout << "current grid: " << currentGrid[m_uNumberOfGridPoints1D-1][m_uNumberOfGridPoints1D-1] << std::endl;
