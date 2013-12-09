@@ -152,7 +152,7 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
         //ds send respective grid unit to slave
-        MPI_Send( &( vecGridUnits[iRank-1] ), 1, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( vecGridUnits[iRank-1], 1, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     //ds wait for all results from workers
