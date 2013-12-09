@@ -230,7 +230,7 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
         std::cout << "receiving: " << m_uRank << std::endl;
 
         //ds receive message from the master
-        MPI_Recv( &gridHeat, m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+        MPI_Recv( &gridHeat[0], m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
