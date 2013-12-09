@@ -139,22 +139,20 @@ void CDomain::updateHeatDistributionNumerical( )
 void CDomain::updateHeatDistributionNumericalMASTER( )
 {
     //ds get portions of the data to send to the slaves
-    //std::vector< double** > vecGridUnits;
+    std::vector< double** > vecGridUnits;
 
     //ds fill the vector
-    //for( unsigned int u = 1; u < m_uNumberOfTasks; ++u )
-    //{
+    for( unsigned int u = 1; u < m_uNumberOfTasks; ++u )
+    {
         //ds get a copy of our heat grid - TODO: reduce massive memory expenses
-    //    vecGridUnits.push_back( getCopyOfHeatGrid( ) );
-    //}
+        vecGridUnits.push_back( getCopyOfHeatGrid( ) );
+    }
 
     //ds send the data to the workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
-        std::cout << "sending to rank: " << iRank << std::endl;
-
         //ds send respective grid unit to slave
-        MPI_Send( getCopyOfHeatGrid( ), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( &( vecGridUnits[iRank-1][0][0] ), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     //ds wait for all results from workers
@@ -164,7 +162,7 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
         double** gridHeadResult( 0 );
 
         //ds get the result
-        MPI_Recv( &gridHeadResult, m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, 0 );
+        MPI_Recv( &( gridHeadResult[0][0] ), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, 0 );
 
         //ds update the main grid
         for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
@@ -220,10 +218,8 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
         //ds heat grid to work with
         double** gridHeat( 0 );
 
-        std::cout << "task: " << m_uRank << " receiving heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
-
         //ds receive message from the master
-        MPI_Recv( &gridHeat, m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+        MPI_Recv( &( gridHeat[0][0] ), m_uNumberOfGridPoints1D*m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
