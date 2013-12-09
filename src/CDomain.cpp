@@ -151,15 +151,15 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     //ds send the data to the workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
-        double* currentGrid = new double[m_uNumberOfGridPoints1D];
+        double* currentGrid = new double[10];
 
         std::cout << "current grid: " << currentGrid[0] << std::endl;
-        std::cout << "current grid: " << currentGrid[m_uNumberOfGridPoints1D-1] << std::endl;
+        std::cout << "current grid: " << currentGrid[10-1] << std::endl;
 
         std::cout << "sending to: " << iRank << std::endl;
 
         //ds send respective grid unit to slave
-        MPI_Send( &currentGrid, m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( &currentGrid, 10, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     while( true ){ };
@@ -230,7 +230,7 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
         std::cout << "receiving: " << m_uRank << std::endl;
 
         //ds receive message from the master
-        MPI_Recv( &gridHeat[0], m_uNumberOfGridPoints1D, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+        MPI_Recv( &gridHeat, 10, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
