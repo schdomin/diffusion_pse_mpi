@@ -230,7 +230,10 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
 
         std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
-        std::cout << "gid[0][0]: " << gridHeat[0][0] << std::endl;
+        std::cout << "gid[0][0]: " << std::endl;
+        std::cout << gridHeat[0][0] << std::endl;
+
+        std::cout << "over" << std::endl;
 
         //ds if its the stop tag terminate
         if( MPI_DIETAG == mpiStatus.MPI_TAG )
