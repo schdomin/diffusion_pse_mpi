@@ -207,7 +207,14 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
 {
     //ds get looping range
     const unsigned int uIndexStart( ( m_uRank-1 )*m_uLoopSize );
-    const unsigned int uIndexEnd( m_uRank*m_uLoopSize - 1 );
+    unsigned int uIndexEnd( m_uRank*m_uLoopSize - 1 );
+
+    //ds if we are the final slave the index end has to be max (sometimes one can enter odd numbers of processes/particles so they can not be divided properly)
+    if( m_uNumberOfTasks == m_uRank + 1 )
+    {
+        //ds set it to the end
+        uIndexEnd = m_uNumberOfGridPoints1D;
+    }
 
     std::cout << "rank: " << m_uRank << std::endl;
     std::cout << "u: " << uIndexStart << " to " << uIndexEnd << std::endl;
