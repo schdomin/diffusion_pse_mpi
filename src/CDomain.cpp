@@ -146,13 +146,15 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
     {
         //ds get a copy of our heat grid - TODO: reduce massive memory expenses
         vecGridUnits.push_back( getCopyOfHeatGrid( ) );
+
+        std::cout << "size: " << sizeof( vecGridUnits[u] ) << std::endl;
     }
 
     //ds send the data to the workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
         //ds send respective grid unit to slave
-        MPI_Send( getCopyOfHeatGrid( ), 1, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
+        MPI_Send( vecGridUnits[iRank-1], 1, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
     //ds wait for all results from workers
