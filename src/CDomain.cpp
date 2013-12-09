@@ -225,8 +225,14 @@ void CDomain::updateHeatDistributionNumericalSLAVE( )
         //ds heat grid to work with
         double** gridHeat( 0 );
 
+        std::cout << "size 1: " << sizeof( gridHeat ) << std::endl;
+
         //ds receive message from the master
         MPI_Recv( &gridHeat, 1, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus );
+
+        std::cout << "size 2: " << sizeof( gridHeat ) << std::endl;
+
+        std::cout << "task: " << m_uRank << " received heat grid: " << uIndexStart << " to " << uIndexEnd << std::endl;
 
         //ds if its the stop tag terminate
         if( MPI_DIETAG == mpiStatus.MPI_TAG )
