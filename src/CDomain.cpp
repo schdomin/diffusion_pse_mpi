@@ -162,6 +162,8 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
         MPI_Send( &currentGrid[0], m_uNumberOfGridPoints1D, MPI_DOUBLE, iRank, MPI_WORKTAG, MPI_COMM_WORLD );
     }
 
+    while( true ){ };
+
     //ds wait for all results from workers
     for( int iRank = 1; iRank < m_uNumberOfTasks; ++iRank )
     {
