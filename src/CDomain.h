@@ -22,6 +22,7 @@ public:
              const unsigned int& p_uNumberOfParticles,
              const double& p_dGridPointSpacing,
              const double& p_dTimeStepSize,
+             const unsigned int& p_uRank,
              const unsigned int& p_uNumberOfTasks );
 
     ~CDomain( );
@@ -53,6 +54,8 @@ private:
     //ds MPI
     unsigned int m_uNumberOfTasks;
     std::vector< double** > vec_GridUnits;
+    const unsigned int m_uRank;
+    const unsigned int m_uLoopSize;
 
 //ds accessors
 public:

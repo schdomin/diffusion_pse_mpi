@@ -64,7 +64,7 @@ int main( int argc, char** argv )
     }
 
     //ds allocate domain (automatically creates initial density distribution)
-    Diffusion::CDomain cDomain( dDiffusionCoefficient, prBoundaries, dBoundarySize, uNumberOfGridPoints1D, uNumberOfParticles, dGridPointSpacing, dTimeStepSize, iNumberOfTasks );
+    Diffusion::CDomain cDomain( dDiffusionCoefficient, prBoundaries, dBoundarySize, uNumberOfGridPoints1D, uNumberOfParticles, dGridPointSpacing, dTimeStepSize, iMyRank, iNumberOfTasks );
 
     //ds get the mode mode
     const unsigned int uMode( atoi( argv[3] ) );

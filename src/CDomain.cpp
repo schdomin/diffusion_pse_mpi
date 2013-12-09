@@ -23,6 +23,7 @@ CDomain::CDomain( const double& p_dDiffusionCoefficient,
              const unsigned int& p_uNumberOfParticles,
              const double& p_dGridPointSpacing,
              const double& p_dTimeStepSize,
+             const unsigned int& p_uRank,
              const unsigned int& p_uNumberOfTasks ) : m_dDiffusionCoefficient( p_dDiffusionCoefficient ),
                                                       m_prBoundaries( p_prBoundaries ),
                                                       m_dBoundarySize( p_dBoundarySize ),
@@ -35,31 +36,41 @@ CDomain::CDomain( const double& p_dDiffusionCoefficient,
                                                       m_PSEFactor( p_dTimeStepSize*p_dDiffusionCoefficient/( m_dEpsilon*m_dEpsilon )*m_dVolP ),
                                                       m_strLogHeatDistribution( "" ),
                                                       m_strLogNorms( "" ),
-                                                      m_uNumberOfTasks( p_uNumberOfTasks )
+                                                      m_uNumberOfTasks( p_uNumberOfTasks ),
+                                                      m_uRank( p_uRank ),
+                                                      m_uLoopSize( p_uNumberOfGridPoints1D/( p_uNumberOfTasks-1 ) )
 
 {
-    //ds allocate memory for the data structure
-    m_gridHeat = new double*[m_uNumberOfGridPoints1D];
-
-    //ds for each element
-    for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
+    //ds only allocate grid if we are the master
+    if( 0 == m_uRank )
     {
-        m_gridHeat[u] = new double[m_uNumberOfGridPoints1D];
-    }
+        //ds allocate memory for the data structure
+        m_gridHeat = new double*[m_uNumberOfGridPoints1D];
 
-    //ds initialize grid
-    setInitialHeatDistribution( );
+        //ds for each element
+        for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
+        {
+            m_gridHeat[u] = new double[m_uNumberOfGridPoints1D];
+        }
+
+        //ds initialize grid
+        setInitialHeatDistribution( );
+    }
 };
 
 CDomain::~CDomain( )
 {
-    //ds deallocate heat structure
-    for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
+    //ds only for the master
+    if( 0 == m_uRank )
     {
-        delete[] m_gridHeat[u];
-    }
+        //ds deallocate heat structure
+        for( unsigned int u = 0; u < m_uNumberOfGridPoints1D; ++u )
+        {
+            delete[] m_gridHeat[u];
+        }
 
-    delete[] m_gridHeat;
+        delete[] m_gridHeat;
+    }
 };
 
 //ds accessors
@@ -158,7 +169,8 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
         {
             for( unsigned int v = 0; v < m_uNumberOfGridPoints1D; ++v )
             {
-                m_gridHeat[u][v] = gridHeadResult[u][v];
+                //ds this is possible because slaves will have 0 values for parts they do not contribute to
+                m_gridHeat[u][v] += gridHeadResult[u][v];
             }
         }
     }
@@ -183,13 +195,29 @@ void CDomain::updateHeatDistributionNumericalMASTER( )
         delete[] vecGridUnits[u];
     }
 
+    //ds clear vector
+    vecGridUnits.clear( );
+
+    //ds done
     std::cout << "master complete" << std::endl;
     getchar( );
-
 }
 
 void CDomain::updateHeatDistributionNumericalSLAVE( )
 {
+    //ds get looping range
+    const unsigned int uIndexStart( ( m_uRank-1 )*m_uLoopSize );
+    const unsigned int uIndexEnd( m_uRank*m_uLoopSize );
+
+    std::cout << "rank: " << m_uRank << std::endl;
+    std::cout << "u: " << uIndexStart << " to " << uIndexEnd << std::endl;
+
+    while( true )
+    {
+        //ds
+    }
+
+
     //ds heat change for current time step
     double gridHeatChangePSE[m_uNumberOfGridPoints1D][m_uNumberOfGridPoints1D];
 
